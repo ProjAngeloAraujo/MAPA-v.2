@@ -1,9 +1,21 @@
 <?php
-include 'conexao.php';
+// CONEXÃO COM BANCO
+$servername = "localhost";
+$username = "root";
+$password = "";
+$database = "feira";
 
+$conn = new mysqli($servername, $username, $password, $database);
+if ($conn->connect_error) {
+    die("Erro na conexão: " . $conn->connect_error);
+}
+
+// PEGAR PARÂMETROS
 $bloco = $_GET['bloco'] ?? null;
 $sala = $_GET['sala'] ?? null;
+$pagina = $_GET['pagina'] ?? 1;
 
+// HTML: TOPO
 function headerHTML() {
     echo <<<HTML
 <!DOCTYPE html>
@@ -11,6 +23,7 @@ function headerHTML() {
 <head>
     <meta charset="UTF-8">
     <title>Feira de Projetos</title>
+    <link href="style.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -19,6 +32,7 @@ function headerHTML() {
 HTML;
 }
 
+// HTML: RODAPÉ
 function footerHTML() {
     echo <<<HTML
 </div>
@@ -27,7 +41,7 @@ function footerHTML() {
 HTML;
 }
 
-// Página 1: Escolher bloco
+// PÁGINA 1 — ESCOLHA DE BLOCO
 if (!$bloco && !$sala) {
     headerHTML();
     echo '<h3 class="text-center">Escolha um bloco</h3><div class="d-flex justify-content-center gap-4 mt-4">';
@@ -38,7 +52,7 @@ if (!$bloco && !$sala) {
     exit;
 }
 
-// Página 2: Salas do bloco escolhido
+// PÁGINA 2 — SALAS DO BLOCO
 if ($bloco && !$sala) {
     headerHTML();
     echo "<a href='index.php' class='btn btn-sm btn-outline-dark mb-3'>&larr; Voltar</a>";
@@ -63,14 +77,45 @@ if ($bloco && !$sala) {
     exit;
 }
 
-// Página 3: Projetos da sala
+// TELA INTERMEDIÁRIA — QUADRA
+if ($bloco && isset($_GET['sala']) && $sala === 'Quadra' && !isset($_GET['pagina'])) {
+    headerHTML();
+    echo "<a href='?bloco=$bloco' class='btn btn-sm btn-outline-dark mb-3'>&larr; Voltar para salas</a>";
+    echo "<h3 class='mb-4'>Projetos na Quadra</h3>";
+
+    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM tbl_projetos WHERE bloco = ? AND sala = ?");
+    $stmt->bind_param("ss", $bloco, $sala);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $total = $result->fetch_assoc()['total'];
+    $stmt->close();
+
+    $grupos = ceil($total / 8);
+    echo "<div class='row'>";
+    for ($i = 1; $i <= $grupos; $i++) {
+            $inicio = (($i - 1) * 8) + 1;
+            $fim = min($i * 8, $total);
+            echo "<div class='col-md-3 mb-3'>
+            <a href='?bloco=$bloco&sala=Quadra&pagina=$i' class='btn btn-outline-success w-100'>Projetos " . $inicio . "-" . $fim . "</a>
+            </div>";
+    }
+
+    echo "</div>";
+    footerHTML();
+    exit;
+}
+
+// PÁGINA 3 — PROJETOS DA SALA (QUALQUER SALA)
 if ($bloco && $sala) {
     headerHTML();
     echo "<a href='?bloco=$bloco' class='btn btn-sm btn-outline-dark mb-3'>&larr; Voltar para salas</a>";
     echo "<h3 class='mb-3'>Projetos da Sala $sala (Bloco $bloco)</h3>";
 
-    $stmt = $conn->prepare("SELECT titulo_projeto, descricao_projeto, ods, stand, prof_orientador FROM tbl_projetos WHERE bloco = ? AND sala = ? ORDER BY posicao_projeto ASC");
-    $stmt->bind_param("ss", $bloco, $sala);
+    $limit = 8;
+    $offset = ($pagina - 1) * $limit;
+
+    $stmt = $conn->prepare("SELECT titulo_projeto, descricao_projeto, ods, stand, prof_orientador FROM tbl_projetos WHERE bloco = ? AND sala = ? ORDER BY posicao_projeto ASC LIMIT ? OFFSET ?");
+    $stmt->bind_param("ssii", $bloco, $sala, $limit, $offset);
     $stmt->execute();
     $result = $stmt->get_result();
 
