@@ -37,5 +37,5 @@ INSERT INTO tbl_projetos (titulo_projeto, descricao_projeto, ods, bloco, sala, s
 
 -- Auditório (sala do Bloco A) – com palestras
 INSERT INTO tbl_projetos (titulo_projeto, descricao_projeto, ods, bloco, sala, stand, prof_orientador, posicao_projeto) VALUES
-('Palestra 1', 'Tema: Sustentabilidade e Energia', 'ODS 7', 'A', 'Auditorio', 'AU1', 'Prof. Palestra', 1),
-('Palestra 2', 'Tema: Inovação na Educação', 'ODS 4', 'A', 'Auditorio', 'AU2', 'Prof. Palestra', 2);
+('Palestra 1', 'Tema: Sustentabilidade e Energia', 'ODS 7', 'B', 'Auditorio', 'AU1', 'Prof. Palestra', 1),
+('Palestra 2', 'Tema: Inovação na Educação', 'ODS 4', 'B', 'Auditorio', 'AU2', 'Prof. Palestra', 2);
